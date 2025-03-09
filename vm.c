@@ -15,7 +15,7 @@
 #define ERROR_MEMORY_ALLOCATION -6
 #define ERROR_MEMORY_REALLOCATION -7
 
-char *bse, *crt;
+void *org, *bse, *crt;
 int imp;
 FILE *file;
 
@@ -37,19 +37,19 @@ void MOV(void){
         size_t dest_total = dest_offset_bits + i;
         size_t src_byte = src_total / 8;
         uint8_t src_bit = 7 - (src_total % 8);
-        uint8_t src_val = (bse[src_byte] >> src_bit) & 1;
+        uint8_t src_val = (((char*)bse)[src_byte] >> src_bit) & 1;
         size_t dest_byte = dest_total / 8;
         uint8_t dest_bit = 7 - (dest_total % 8);
         if (src_val) {
-            bse[dest_byte] |= (1 << dest_bit);
+            ((char*)bse)[dest_byte] |= (1 << dest_bit);
         } else {
-            bse[dest_byte] &= ~(1 << dest_bit);
+            ((char*)bse)[dest_byte] &= ~(1 << dest_bit);
         }
     }
     imp = *(int*)(crt += 3*sizeof(int)+sizeof(int));
 }
 void JMP(void){
-    if(*(crt + 1)){
+    if(*(char*)(crt + 1)){
         imp = *(int*)(crt = bse + *((int*)crt + 2));
     }else{
         imp = *(int*)(crt += sizeof(char)+sizeof(int)+sizeof(int));
@@ -72,7 +72,7 @@ void DLL() {
         memcpy(funcs, basic_funcs, (funcs_size - 1) * sizeof(void(*)()));
     }
     crt += strlen(crt) + 1;
-    while (*crt) {
+    while (*(char*)crt) {
         funcs_size++;
         funcs = realloc(funcs, funcs_size * sizeof(void(*)()));if (!funcs) { *err = ERROR_MEMORY_REALLOCATION; return; }
         FARPROC proc = GetProcAddress(hLib, crt);if (!proc) { *err = ERROR_FUNCTION_LOAD; return; }
@@ -82,9 +82,10 @@ void DLL() {
     imp = *(int*)(++crt);
 }
 
+__declspec(dllexport) void** vmc_get_org_ptr() {return &org;}
+__declspec(dllexport) void** vmc_get_bse_ptr() {return &bse;}
+__declspec(dllexport) void** vmc_get_crt_ptr() {return &crt;}
 __declspec(dllexport) int* vmc_get_imp_ptr() {return &imp;}
-__declspec(dllexport) char** vmc_get_bse_ptr() {return &bse;}
-__declspec(dllexport) char** vmc_get_crt_ptr() {return &crt;}
 __declspec(dllexport) FILE** vmc_get_file_ptr() {return &file;}
 __declspec(dllexport) void*** vmc_get_funcs_ptr() {return (void***)&funcs;}
 __declspec(dllexport) int* vmc_get_funcs_size_ptr() {return &funcs_size;}
@@ -105,7 +106,7 @@ int main(int argc, char const *argv[]){
         *(int*)crt = ftell(file);
         fseek(file, 0, SEEK_SET);
     }
-    bse = crt = realloc(crt, *(int*)crt);if (!crt) return ERROR_MEMORY_REALLOCATION;
+    org = bse = crt = realloc(crt, *(int*)crt);if (!crt) return ERROR_MEMORY_REALLOCATION;
     if (fread(crt, *(int*)crt, 1, file) != 1) return ERROR_FILE_READ;
     imp = *(int*)crt;
     while (1) funcs[imp]();
