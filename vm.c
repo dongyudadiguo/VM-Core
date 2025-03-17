@@ -15,7 +15,7 @@
 #define ERROR_MEMORY_ALLOCATION -6
 #define ERROR_MEMORY_REALLOCATION -7
 
-void *org, *bse, *crt;
+void *bse, *crt;
 int imp;
 FILE *file;
 
@@ -82,7 +82,6 @@ void DLL() {
     imp = *(int*)(++crt);
 }
 
-__declspec(dllexport) void** vmc_get_org_ptr() {return &org;}
 __declspec(dllexport) void** vmc_get_bse_ptr() {return &bse;}
 __declspec(dllexport) void** vmc_get_crt_ptr() {return &crt;}
 __declspec(dllexport) int* vmc_get_imp_ptr() {return &imp;}
@@ -106,7 +105,7 @@ int main(int argc, char const *argv[]){
         *(int*)crt = ftell(file);
         fseek(file, 0, SEEK_SET);
     }
-    org = bse = crt = realloc(crt, *(int*)crt);if (!crt) return ERROR_MEMORY_REALLOCATION;
+    bse = crt = realloc(crt, *(int*)crt);if (!crt) return ERROR_MEMORY_REALLOCATION;
     if (fread(crt, *(int*)crt, 1, file) != 1) return ERROR_FILE_READ;
     imp = *(int*)crt;
     while (1) funcs[imp]();
