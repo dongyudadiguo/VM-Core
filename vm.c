@@ -110,3 +110,5 @@ int main(int argc, char const *argv[]){
     imp = *(int*)crt;
     while (1) funcs[imp]();
 }
+
+// gcc vm.c -o vm.exe
