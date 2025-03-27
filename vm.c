@@ -19,11 +19,9 @@ void *bse, *crt;
 int imp;
 FILE *file;
 
-// void function(void){
-//     //function code
-// }
+// void function(void){...}// void function(void){...}
 
-//#define name_instruction function, ...//#define name_instruction function, ...
+//#define new_instruction function, ...//#define name_instruction function, ...
 
 void OVER(void){
     exit(*((int*)crt + 1));
@@ -60,7 +58,7 @@ void DLL(void);
 
 #define basic_instruction OVER, MOV, JMP, DLL
 
-void (*basic_funcs[])() = {basic_instruction};//void (*basic_funcs[])() = {basic_instruction, name_instruction, ...};
+void (*basic_funcs[])() = {basic_instruction};//void (*basic_funcs[])() = {basic_instruction, new_instruction, ...};
 void (**funcs)() = basic_funcs;
 int funcs_size = sizeof(basic_funcs) / sizeof(basic_funcs[0]);
 
